@@ -6896,21 +6896,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 双击 logo 可重置 API Key
 
-  var logo = document.querySelector('nav');
-
-  if (logo) {
-
-    logo.addEventListener('dblclick', function() {
-
-      if (confirm('是否重置 API Key？')) {
-
-        localStorage.removeItem('zhipu_api_key');
-
-        alert('API Key 已清除，下次生成时会重新要求输入');
-
-      }
-
-    });
+  // API Key 已内置，无需重置功能
 
   }
 
