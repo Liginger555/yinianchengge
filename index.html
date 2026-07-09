@@ -3482,7 +3482,6 @@
 
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 
 
@@ -4099,7 +4098,7 @@
 
 
 
-          <h3>钢琴 Demo</h3>
+          <h3>AI 歌曲生成</h3>
 
 
 
@@ -4431,7 +4430,7 @@
 
 
 
-          <button class="btn btn-secondary" style="width:100%;">4. 生成钢琴 Demo</button>
+          <button class="btn btn-secondary" style="width:100%;">4. 生成歌曲 Demo</button>
 
 
 
@@ -4487,7 +4486,7 @@
 
 
 
-            <div class="tab">Demo</div>
+            <div class="tab">生成歌曲</div>
 
 
 
@@ -5403,11 +5402,11 @@ Chorus：F - G - Em - Am / Dm - G - C
 
 
 
-                  <h3>钢琴 Demo</h3>
+                  <h3>AI 歌曲生成</h3>
 
 
 
-                  <div class="hint">第一版先生成钢琴 Demo Prompt；后续升级为 MIDI 播放、MP3 试听和下载。</div>
+                  <div class="hint">生成 Suno 创作提示词，一键跳转 Suno 即可生成完整歌曲（含人声演唱）。</div>
 
 
 
@@ -5675,23 +5674,23 @@ Chorus：F - G - Em - Am / Dm - G - C
 
 
 
-                <button class="small-btn green">复制 Demo Prompt</button>
+                <button class="small-btn green" id="btn-copy-suno">复制并打开 Suno</button>
 
 
 
-                <button class="small-btn cyan">生成 MIDI</button>
+                <button class="small-btn cyan" id="btn-copy-lyrics-suno">仅复制歌词</button>
 
 
 
-                <button class="small-btn cyan">生成 MP3</button>
+                <button class="small-btn cyan" id="btn-copy-style-suno">仅复制风格标签</button>
 
 
 
-                <button class="small-btn primary">重新生成钢琴版</button>
+                <button class="small-btn primary" id="btn-regen-suno">重新生成提示词</button>
 
 
 
-                <button class="small-btn">下载 Demo</button>
+                <button class="small-btn" id="btn-download-prompt">下载提示词文件</button>
 
 
 
@@ -5843,7 +5842,7 @@ Chorus：F - G - Em - Am / Dm - G - C
 
 
 
-          <h3>钢琴 Demo</h3>
+          <h3>AI 歌曲生成</h3>
 
 
 
@@ -6143,7 +6142,7 @@ var SCORE_SYSTEM_PROMPT = "你是一位专业的音乐记谱员，擅长将歌�
 
 
 
-var DEMO_SYSTEM_PROMPT = "你是一位专业的音乐制作人和编曲师。根据歌词和作曲方案，生成可以直接用 Tone.js 播放的钢琴音符序列。\n\n### 严格输出要求：\n\n你必须且只能输出一个 JSON 对象，不要输出任何其他文字、解释或 markdown 标记。\n\n### JSON 格式：\n\n{\"bpm\": 数字, \"title\": \"歌名\", \"rightHand\": [{\"time\": \"0:0:0\", \"note\": \"C4\", \"duration\": \"4n\", \"velocity\": 0.8}], \"leftHand\": [{\"time\": \"0:0:0\", \"note\": \"C3\", \"duration\": \"2n\", \"velocity\": 0.6}]}\n\n### 字段说明：\n- bpm: 速度 (60-140)\n- time: Tone.js 时间格式 \"小节:拍:十六分音符\" (如 \"0:0:0\", \"0:1:0\", \"1:0:0\")\n- note: 音名+八度 (如 C4, D#4, Bb3)\n- duration: 时值 (\"16n\"=十六分, \"8n\"=八分, \"4n\"=四分, \"2n\"=二分, \"1n\"=全音符, \"4n.\"=附点四分)\n- velocity: 力度 0.1-1.0\n\n### 创作规则：\n1. 右手弹旋律(根据歌词音韵设计,覆盖主歌+副歌),左手弹和弦伴奏\n2. 生成约 16-24 小节的完整段落（至少包含主歌+副歌）\n3. 音域：右手 C4-C6，左手 C2-C4\n4. 每小节 4 拍(4/4拍)\n5. 只输出 JSON，不要加 ```json 标记或任何多余文字";
+var DEMO_SYSTEM_PROMPT = "你是一位专业的音乐 Prompt 工程师，擅长将歌词和作曲方案转化为 Suno AI 的最佳创作提示词。\n\n### 输出格式要求：\n\n你必须输出以下两部分，用 === 分隔：\n\n第一部分【歌词】：\n将歌词整理为 Suno 格式，保留段落标记（如 [Verse 1]、[Chorus]、[Bridge]、[Outro]），每行一句。\n\n第二部分【风格标签】：\n用英文逗号分隔的风格标签，如：Chinese pop, piano ballad, emotional, male vocal, 80 BPM\n\n=== 分隔线 ===\n\n### 示例输出：\n\n[Verse 1]\n月光洒在窗台上\n你的影子还在心上\n\n[Chorus]\n我在风中等你回来\n等不到那一句释怀\n\n===\nChinese pop, piano ballad, emotional, female vocal, slow tempo, 75 BPM\n\n### 规则：\n1. 歌词必须保留完整，不要删减\n2. 风格标签要具体（包含语言、乐器、情绪、速度、性别）\n3. 不要输出任何解释或额外文字";
 
 
 
@@ -6499,7 +6498,7 @@ async function generateDemo() {
 
   if (!generatedLyrics || !generatedCompose) {
 
-    alert('请先完成第 1 步（歌词）和第 2 步（作曲），再生成钢琴 Demo');
+    alert('请先完成第 1 步（歌词）和第 2 步（作曲），再生成 Demo');
 
     return;
 
@@ -6507,19 +6506,19 @@ async function generateDemo() {
 
 
 
-  var userPrompt = '请根据以下歌词和作曲方案，生成钢琴演奏的 JSON 音符数据。\n\n【歌词】\n' + generatedLyrics + '\n\n【作曲方案】\n' + generatedCompose;
+  var userPrompt = '请将以下歌词和作曲方案转化为 Suno AI 的创作提示词：\n\n【歌词】\n' + generatedLyrics + '\n\n【作曲方案】\n' + generatedCompose;
 
 
 
   var demoCard = document.querySelector('#demo');
 
-  showLoading(demoCard, '正在生成钢琴演奏数据，请稍候...');
+  showLoading(demoCard, '正在生成 Suno 创作提示词...');
 
 
 
   try {
 
-    var result = await callZhipuAPI(DEMO_SYSTEM_PROMPT, userPrompt, 0.3);
+    var result = await callZhipuAPI(DEMO_SYSTEM_PROMPT, userPrompt, 0.5);
 
     if (!result) { hideLoading(demoCard); return; }
 
@@ -6529,39 +6528,27 @@ async function generateDemo() {
 
 
 
-    // 清理 AI 返回的内容 - 提取 JSON
+    // 存储结果
 
-    var jsonStr = result.trim();
-
-    if (jsonStr.startsWith('```')) {
-
-      jsonStr = jsonStr.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
-
-    }
-
-    // 尝试找到 JSON 对象
-
-    var jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-
-    if (jsonMatch) jsonStr = jsonMatch[0];
+    window.sunoPromptData = result;
 
 
 
-    var pianoData = JSON.parse(jsonStr);
+    // 解析歌词和风格标签
+
+    var parts = result.split('===');
+
+    var lyrics = parts[0] ? parts[0].trim() : result;
+
+    var styleTags = parts[1] ? parts[1].trim() : '';
 
 
 
-    // 存储数据用于播放
-
-    window.currentPianoData = pianoData;
-
-
-
-    // 更新 UI
+    // 更新 UI - 隐藏播放器，显示 Suno prompt
 
     var demoPlayer = demoCard.querySelector('.demo-player');
 
-    if (demoPlayer) demoPlayer.style.display = 'block';
+    if (demoPlayer) demoPlayer.style.display = 'none';
 
 
 
@@ -6569,23 +6556,21 @@ async function generateDemo() {
 
     if (promptBox) {
 
-      promptBox.textContent = '\ud83c\udfb9 钢琴 Demo 已生成：' + (pianoData.title || '未命名') + '\nBPM: ' + pianoData.bpm + '\n右手音符: ' + pianoData.rightHand.length + ' 个\n左手音符: ' + (pianoData.leftHand ? pianoData.leftHand.length : 0) + ' 个\n\n点击上方 \u25b6 按钮播放！';
+      var displayText = '\u{1f3b5} Suno \u521b\u4f5c\u63d0\u793a\u8bcd\u5df2\u751f\u6210\uff01\n\n';
+
+      displayText += '\u3010\u6b4c\u8bcd\u3011\n' + lyrics + '\n\n';
+
+      if (styleTags) displayText += '\u3010\u98ce\u683c\u6807\u7b7e\u3011\n' + styleTags + '\n\n';
+
+      displayText += '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n';
+
+      displayText += '\u70b9\u51fb\u4e0b\u65b9\u300c\u590d\u5236\u5e76\u6253\u5f00 Suno\u300d\u6309\u94ae\uff0c\u7c98\u8d34\u5373\u53ef\u751f\u6210\u5b8c\u6574\u6b4c\u66f2\uff01';
+
+      promptBox.textContent = displayText;
 
       promptBox.style.whiteSpace = 'pre-wrap';
 
-    }
-
-
-
-    // 绑定播放按钮
-
-    var playBtn = demoCard.querySelector('.play-button');
-
-    if (playBtn) {
-
-      playBtn.onclick = function() { playPianoDemo(pianoData); };
-
-      playBtn.textContent = '\u25b6';
+      promptBox.style.display = 'block';
 
     }
 
@@ -6597,25 +6582,7 @@ async function generateDemo() {
 
     hideLoading(demoCard);
 
-    if (e instanceof SyntaxError) {
-
-      // JSON 解析失败，显示原始内容
-
-      var promptBox2 = demoCard.querySelector('.prompt-box');
-
-      if (promptBox2) {
-
-        promptBox2.textContent = '\u26a0\ufe0f AI返回数据格式有误，无法播放。原始内容：\n\n' + result;
-
-        promptBox2.style.whiteSpace = 'pre-wrap';
-
-      }
-
-    } else {
-
-      alert('生成失败：' + e.message);
-
-    }
+    alert('\u751f\u6210\u5931\u8d25\uff1a' + e.message);
 
   }
 
@@ -6660,298 +6627,6 @@ function switchTab(index) {
 
 
 
-// ===== MIDI 文件生成 =====
-function generateMIDI(data) {
-  // 简化的 MIDI 文件生成
-  var bpm = data.bpm || 80;
-  var ticksPerBeat = 480;
-  
-  function writeVarLen(value) {
-    var result = [];
-    var buffer = value & 0x7F;
-    while ((value >>= 7) > 0) {
-      buffer <<= 8;
-      buffer |= 0x80;
-      buffer += (value & 0x7F);
-    }
-    while (true) {
-      result.push(buffer & 0xFF);
-      if (buffer & 0x80) buffer >>= 8;
-      else break;
-    }
-    return result;
-  }
-  
-  function noteToMidi(noteStr) {
-    var notes = {'C':0,'D':2,'E':4,'F':5,'G':7,'A':9,'B':11};
-    var match = noteStr.match(/([A-G])(#|b)?(\d)/);
-    if (!match) return 60;
-    var base = notes[match[1]];
-    if (match[2] === '#') base++;
-    if (match[2] === 'b') base--;
-    return base + (parseInt(match[3]) + 1) * 12;
-  }
-  
-  function durationToTicks(dur) {
-    var map = {'1n': ticksPerBeat*4, '2n': ticksPerBeat*2, '4n': ticksPerBeat, '8n': ticksPerBeat/2, '16n': ticksPerBeat/4, '4n.': ticksPerBeat*1.5, '2n.': ticksPerBeat*3};
-    return map[dur] || ticksPerBeat;
-  }
-  
-  function timeToTicks(timeStr) {
-    var parts = timeStr.split(':');
-    var bars = parseInt(parts[0]) || 0;
-    var beats = parseInt(parts[1]) || 0;
-    var sixteenths = parseInt(parts[2]) || 0;
-    return (bars * 4 + beats) * ticksPerBeat + sixteenths * (ticksPerBeat / 4);
-  }
-  
-  // Collect all notes and sort by time
-  var events = [];
-  var allNotes = (data.rightHand || []).concat(data.leftHand || []);
-  allNotes.forEach(function(n) {
-    var tick = timeToTicks(n.time);
-    var midi = noteToMidi(n.note);
-    var vel = Math.round((n.velocity || 0.8) * 127);
-    var dur = durationToTicks(n.duration || '4n');
-    events.push({tick: tick, type: 'on', note: midi, vel: vel});
-    events.push({tick: tick + dur, type: 'off', note: midi, vel: 0});
-  });
-  events.sort(function(a, b) { return a.tick - b.tick || (a.type === 'off' ? -1 : 1); });
-  
-  // Build track data
-  var trackData = [];
-  // Tempo event
-  var microsecondsPerBeat = Math.round(60000000 / bpm);
-  trackData.push(0x00, 0xFF, 0x51, 0x03);
-  trackData.push((microsecondsPerBeat >> 16) & 0xFF);
-  trackData.push((microsecondsPerBeat >> 8) & 0xFF);
-  trackData.push(microsecondsPerBeat & 0xFF);
-  
-  // Note events
-  var lastTick = 0;
-  events.forEach(function(evt) {
-    var delta = evt.tick - lastTick;
-    lastTick = evt.tick;
-    var varLen = writeVarLen(delta);
-    varLen.forEach(function(b) { trackData.push(b); });
-    if (evt.type === 'on') {
-      trackData.push(0x90, evt.note, evt.vel);
-    } else {
-      trackData.push(0x80, evt.note, 0);
-    }
-  });
-  
-  // End of track
-  trackData.push(0x00, 0xFF, 0x2F, 0x00);
-  
-  // Build MIDI file
-  var midi = [];
-  // Header: MThd
-  midi.push(0x4D, 0x54, 0x68, 0x64); // MThd
-  midi.push(0x00, 0x00, 0x00, 0x06); // chunk length
-  midi.push(0x00, 0x00); // format 0
-  midi.push(0x00, 0x01); // 1 track
-  midi.push((ticksPerBeat >> 8) & 0xFF, ticksPerBeat & 0xFF); // ticks per beat
-  
-  // Track: MTrk
-  midi.push(0x4D, 0x54, 0x72, 0x6B); // MTrk
-  var len = trackData.length;
-  midi.push((len >> 24) & 0xFF, (len >> 16) & 0xFF, (len >> 8) & 0xFF, len & 0xFF);
-  trackData.forEach(function(b) { midi.push(b); });
-  
-  // Download
-  var arr = new Uint8Array(midi);
-  var blob = new Blob([arr], {type: 'audio/midi'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = (data.title || 'piano-demo') + '.mid';
-  a.click();
-  alert('MIDI 文件已下载！可用任何 MIDI 播放器或 DAW 打开');
-}
-
-// ===== Tone.js 钢琴播放器 =====
-
-var pianoSynth = null;
-
-var isPlaying = false;
-
-
-
-async function playPianoDemo(data) {
-
-  if (isPlaying) {
-
-    Tone.Transport.stop();
-
-    Tone.Transport.cancel();
-
-    isPlaying = false;
-
-    var btn = document.querySelector('#demo .play-button');
-
-    if (btn) btn.textContent = '\u25b6';
-
-    return;
-
-  }
-
-
-
-  await Tone.start();
-
-  Tone.Transport.cancel();
-
-  Tone.Transport.bpm.value = data.bpm || 80;
-
-
-
-  // 创建钢琴音色
-
-  if (!pianoSynth) {
-
-    pianoSynth = new Tone.PolySynth(Tone.Synth, {
-
-      oscillator: { type: 'triangle' },
-
-      envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 1.0 }
-
-    }).toDestination();
-
-    pianoSynth.volume.value = -6;
-
-  }
-
-
-
-  // 安排右手音符
-
-  if (data.rightHand && data.rightHand.length > 0) {
-
-    data.rightHand.forEach(function(n) {
-
-      Tone.Transport.schedule(function(time) {
-
-        pianoSynth.triggerAttackRelease(n.note, n.duration || '8n', time, n.velocity || 0.8);
-
-      }, n.time);
-
-    });
-
-  }
-
-
-
-  // 安排左手音符
-
-  if (data.leftHand && data.leftHand.length > 0) {
-
-    data.leftHand.forEach(function(n) {
-
-      Tone.Transport.schedule(function(time) {
-
-        pianoSynth.triggerAttackRelease(n.note, n.duration || '4n', time, (n.velocity || 0.6) * 0.7);
-
-      }, n.time);
-
-    });
-
-  }
-
-
-
-  // 计算总时长
-
-  var allNotes = (data.rightHand || []).concat(data.leftHand || []);
-
-  var maxTime = 0;
-
-  allNotes.forEach(function(n) {
-
-    var parts = n.time.split(':');
-
-    var bars = parseInt(parts[0]) || 0;
-
-    var beats = parseInt(parts[1]) || 0;
-
-    var sixteenths = parseInt(parts[2]) || 0;
-
-    var totalBeats = bars * 4 + beats + sixteenths * 0.25;
-
-    if (totalBeats > maxTime) maxTime = totalBeats;
-
-  });
-
-  var totalDuration = (maxTime + 4) * (60 / (data.bpm || 80));
-
-
-
-  // 更新 UI
-
-  var btn = document.querySelector('#demo .play-button');
-
-  if (btn) btn.textContent = '\u23f8';
-
-  isPlaying = true;
-
-
-
-  // 更新进度条
-
-  var progressFill = document.querySelector('#demo .progress-fill');
-
-  var timeHint = document.querySelector('#demo .play-row .hint');
-
-  var progressInterval = setInterval(function() {
-
-    if (!isPlaying) { clearInterval(progressInterval); return; }
-
-    var current = Tone.Transport.seconds;
-
-    var pct = Math.min(100, (current / totalDuration) * 100);
-
-    if (progressFill) progressFill.style.width = pct + '%';
-
-    if (timeHint) {
-
-      var cm = Math.floor(current / 60);
-
-      var cs = Math.floor(current % 60);
-
-      var tm = Math.floor(totalDuration / 60);
-
-      var ts = Math.floor(totalDuration % 60);
-
-      timeHint.textContent = (cm < 10 ? '0' : '') + cm + ':' + (cs < 10 ? '0' : '') + cs + ' / ' + (tm < 10 ? '0' : '') + tm + ':' + (ts < 10 ? '0' : '') + ts;
-
-    }
-
-  }, 200);
-
-
-
-  // 播放结束自动停止
-
-  Tone.Transport.schedule(function() {
-
-    Tone.Transport.stop();
-
-    isPlaying = false;
-
-    if (btn) btn.textContent = '\u25b6';
-
-    if (progressFill) progressFill.style.width = '0%';
-
-    clearInterval(progressInterval);
-
-  }, '+' + totalDuration);
-
-
-
-  Tone.Transport.start();
-
-}
-
-
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -6975,7 +6650,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       else if (text.includes('生成乐谱')) btn.addEventListener('click', generateScore);
 
-      else if (text.includes('生成钢琴')) btn.addEventListener('click', generateDemo);
+      else if (text.includes('生成歌曲')) btn.addEventListener('click', generateDemo);
 
     });
 
@@ -7258,66 +6933,59 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
   
-  // ===== Demo 区按钮绑定 =====
-  var demoCard = document.querySelector('#demo');
-  if (demoCard) {
-    demoCard.querySelectorAll('.small-btn').forEach(function(btn) {
-      var text = btn.textContent.trim();
-      
-      if (text === '复制 Demo Prompt') {
-        btn.addEventListener('click', function() {
-          var box = document.querySelector('#demo .prompt-box');
-          var c = box ? box.textContent : '';
-          if (c) { navigator.clipboard.writeText(c).then(function() { alert('已复制到剪贴板'); }); }
-          else { alert('暂无内容可复制，请先生成 Demo'); }
-        });
-      }
-      
-      if (text.includes('重新生成钢琴版')) {
-        btn.addEventListener('click', function() {
-          if (!generatedLyrics || !generatedCompose) {
-            alert('请先完成歌词和作曲步骤');
-            return;
-          }
-          generateDemo();
-        });
-      }
-      
-      if (text.includes('生成 MIDI')) {
-        btn.addEventListener('click', function() {
-          if (!window.currentPianoData) {
-            alert('请先生成钢琴 Demo，再导出 MIDI');
-            return;
-          }
-          // 生成 MIDI 文件
-          generateMIDI(window.currentPianoData);
-        });
-      }
-      
-      if (text.includes('生成 MP3')) {
-        btn.addEventListener('click', function() {
-          if (!window.currentPianoData) {
-            alert('请先生成钢琴 Demo');
-            return;
-          }
-          alert('MP3 导出功能开发中，请先使用在线播放试听');
-        });
-      }
-      
-      if (text.includes('下载 Demo')) {
-        btn.addEventListener('click', function() {
-          if (!window.currentPianoData) {
-            alert('请先生成钢琴 Demo');
-            return;
-          }
-          // 下载 JSON 数据
-          var blob = new Blob([JSON.stringify(window.currentPianoData, null, 2)], {type: 'application/json'});
-          var a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = (window.currentPianoData.title || 'piano-demo') + '.json';
-          a.click();
-        });
-      }
+  // ===== Demo 区按钮绑定 (Suno 工作流) =====
+  var btnCopySuno = document.getElementById('btn-copy-suno');
+  if (btnCopySuno) {
+    btnCopySuno.addEventListener('click', function() {
+      if (!window.sunoPromptData) { alert('请先点击「4. 生成歌曲 Demo」'); return; }
+      var parts = window.sunoPromptData.split('===');
+      var lyrics = parts[0] ? parts[0].trim() : '';
+      var style = parts[1] ? parts[1].trim() : '';
+      // 复制歌词到剪贴板
+      navigator.clipboard.writeText(lyrics).then(function() {
+        // 复制成功后打开 Suno
+        alert('歌词已复制到剪贴板！\n\n即将打开 Suno 创作页面：\n1. 在「Song Description」中粘贴歌词\n2. 在「Style of Music」中填入：' + style.substring(0, 60) + '\n3. 点击 Create 生成歌曲');
+        window.open('https://suno.com/create', '_blank');
+      });
+    });
+  }
+
+  var btnCopyLyrics = document.getElementById('btn-copy-lyrics-suno');
+  if (btnCopyLyrics) {
+    btnCopyLyrics.addEventListener('click', function() {
+      if (!window.sunoPromptData) { alert('请先生成提示词'); return; }
+      var parts = window.sunoPromptData.split('===');
+      var lyrics = parts[0] ? parts[0].trim() : window.sunoPromptData;
+      navigator.clipboard.writeText(lyrics).then(function() { alert('歌词已复制到剪贴板'); });
+    });
+  }
+
+  var btnCopyStyle = document.getElementById('btn-copy-style-suno');
+  if (btnCopyStyle) {
+    btnCopyStyle.addEventListener('click', function() {
+      if (!window.sunoPromptData) { alert('请先生成提示词'); return; }
+      var parts = window.sunoPromptData.split('===');
+      var style = parts[1] ? parts[1].trim() : '请先生成提示词';
+      navigator.clipboard.writeText(style).then(function() { alert('风格标签已复制到剪贴板'); });
+    });
+  }
+
+  var btnRegenSuno = document.getElementById('btn-regen-suno');
+  if (btnRegenSuno) {
+    btnRegenSuno.addEventListener('click', function() {
+      generateDemo();
+    });
+  }
+
+  var btnDownloadPrompt = document.getElementById('btn-download-prompt');
+  if (btnDownloadPrompt) {
+    btnDownloadPrompt.addEventListener('click', function() {
+      if (!window.sunoPromptData) { alert('请先生成提示词'); return; }
+      var blob = new Blob([window.sunoPromptData], {type: 'text/plain;charset=utf-8'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'suno-prompt.txt';
+      a.click();
     });
   }
 
