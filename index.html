@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>一念成歌 - AI 歌词、作曲、乐谱、钢琴 Demo 生成网站</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0d1020;
+      --bg-2: #151936;
+      --card: rgba(255, 255, 255, 0.075);
+      --border: rgba(255, 255, 255, 0.13);
+      --text: #ffffff;
+      --muted: #bfc3e6;
+      --muted-2: #8f96c6;
+      --primary: #8b5cf6;
+      --pink: #ec4899;
+      --cyan: #22d3ee;
+      --green: #22c55e;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font-family: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 5%, rgba(139, 92, 246, 0.36), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(236, 72, 153, 0.28), transparent 28%),
+        radial-gradient(circle at 65% 42%, rgba(34, 211, 238, 0.12), transparent 24%),
+        linear-gradient(180deg, #0d1020 0%, #151936 46%, #0b0d19 100%);
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 6.5%;
+      background: rgba(13, 16, 32, 0.82);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 18px 40px rgba(236, 72, 153, 0.32);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      color: #d8dcff;
+      font-size: 14px;
+    }
+
+    .nav-cta {
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #11152c;
+      font-weight: 800;
+    }
+
+    .hero {
+      padding: 84px 6.5% 56px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 46px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #eeeaff;
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 62px;
+      line-height: 1.05;
+      letter-spacing: -2.5px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #ffffff, #f0abfc, #a5b4fc, #67e8f9);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      max-width: 680px;
+      margin: 24px 0 34px;
+      color: var(--muted);
+      font-size: 19px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 16px;
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 850;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.94;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--pink));
+      color: white;
+      box-shadow: 0 20px 42px rgba(139, 92, 246, 0.32);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.09);
+      color: white;
+      border: 1px solid var(--border);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: white;
+    }
+
+    .btn-cyan {
+      background: linear-gradient(135deg, #0891b2, #22d3ee);
+      color: white;
+    }
+
+    .hero-panel {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 24px;
+      box-shadow: 0 30px 88px rgba(0, 0, 0, 0.35);
+    }
+
+    .label {
+      color: #e1e5ff;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .hint {
+      color: var(--muted-2);
+      font-size: 13px;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.24);
+      color: white;
+      outline: none;
+      padding: 13px 14px;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 126px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .field {
+      margin-bottom: 15px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.08);
+      color: #e7eaff;
+      font-size: 13px;
+    }
+
+    .chip.active {
+      background: rgba(236, 72, 153, 0.24);
+      border-color: rgba(236, 72, 153, 0.55);
+    }
+
+    .notice {
+      background: rgba(245, 158, 11, 0.13);
+      border: 1px solid rgba(245, 158, 11, 0.32);
+      color: #fde68a;
+      border-radius: 20px;
+      padding: 16px 18px;
+      margin-top: 18px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      padding: 0 6.5% 32px;
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted-2);
+      font-size: 13px;
+    }
+
+    .section {
+      padding: 58px 6.5%;
+    }
+
+    .section-head {
+      max-width: 850px;
+      margin-bottom: 28px;
+    }
+
+    .section-kicker {
+      color: #c4b5fd;
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 36px;
+      line-height: 1.18;
+      letter-spacing: -1px;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .step-card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 22px;
+      overflow: hidden;
+    }
+
+    .step-card::after {
+      content: "";
+      position: absolute;
+      right: -34px;
+      top: -34px;
+      width: 95px;
+      height: 95px;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.2);
+    }
+
+    .step-num {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+
+    .step-card h3 {
+      margin: 0 0 8px;
+      font-size: 19px;
+    }
+
+    .step-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .side-panel,
+    .main-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 22px;
+    }
+
+    .side-panel {
+      position: sticky;
+      top: 92px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .panel-title h3 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .status-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.16);
+      color: #86efac;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.07);
+      color: #e9ecff;
+      border-radius: 16px;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.75), rgba(236, 72, 153, 0.75));
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .result-card {
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 24px;
+      padding: 22px;
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .result-top h3 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    .score {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.16);
+      color: #86efac;
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .lyrics {
+      white-space: pre-line;
+      color: #f6f7ff;
+      font-size: 15px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .small-btn {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      border-radius: 12px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .small-btn.primary {
+      background: rgba(139, 92, 246, 0.34);
+    }
+
+    .small-btn.pink {
+      background: rgba(236, 72, 153, 0.24);
+    }
+
+    .small-btn.green {
+      background: rgba(34, 197, 94, 0.18);
+      color: #bbf7d0;
+    }
+
+    .small-btn.cyan {
+      background: rgba(34, 211, 238, 0.18);
+      color: #a5f3fc;
+    }
+
+    .music-info {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .info-box {
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .info-box span {
+      display: block;
+      color: var(--muted-2);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .info-box strong {
+      font-size: 18px;
+    }
+
+    .prompt-box {
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      color: #eef2ff;
+      white-space: pre-line;
+      font-size: 14px;
+    }
+
+    .jianpu {
+      background: rgba(255, 255, 255, 0.92);
+      color: #1f2937;
+      border-radius: 18px;
+      padding: 18px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      font-size: 14px;
+    }
+
+    .score-sheet {
+      background: #f6f2e8;
+      color: #222;
+      border-radius: 20px;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .score-sheet-header {
+      text-align: center;
+      border-bottom: 1px solid #d8d1c4;
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+    }
+
+    .score-sheet-header h2 {
+      margin: 0 0 4px;
+      color: #111;
+      font-size: 30px;
+    }
+
+    .score-sheet-header p {
+      margin: 0;
+      color: #555;
+      font-size: 13px;
+    }
+
+    .staff-block {
+      margin-bottom: 24px;
+    }
+
+    .staff-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #444;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .staff {
+      position: relative;
+      height: 124px;
+      background:
+        linear-gradient(to bottom,
+          transparent 0px,
+          transparent 15px,
+          #333 16px,
+          transparent 17px,
+          transparent 31px,
+          #333 32px,
+          transparent 33px,
+          transparent 47px,
+          #333 48px,
+          transparent 49px,
+          transparent 63px,
+          #333 64px,
+          transparent 65px,
+          transparent 79px,
+          #333 80px,
+          transparent 81px,
+          transparent 100%);
+      border-left: 2px solid #333;
+      border-right: 2px solid #333;
+    }
+
+    .bar {
+      position: absolute;
+      top: 16px;
+      bottom: 42px;
+      width: 1px;
+      background: #444;
+    }
+
+    .note {
+      position: absolute;
+      width: 14px;
+      height: 10px;
+      border-radius: 50%;
+      background: #111;
+      transform: rotate(-18deg);
+    }
+
+    .note::after {
+      content: "";
+      position: absolute;
+      right: -3px;
+      top: -36px;
+      width: 2px;
+      height: 40px;
+      background: #111;
+      transform: rotate(18deg);
+    }
+
+    .lyric-syllable {
+      position: absolute;
+      top: 91px;
+      font-size: 13px;
+      color: #222;
+      transform: translateX(-30%);
+      white-space: nowrap;
+    }
+
+    .chord-symbol {
+      position: absolute;
+      top: 0;
+      color: #7c2d12;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .clef {
+      position: absolute;
+      left: 8px;
+      top: 17px;
+      font-size: 46px;
+      line-height: 1;
+    }
+
+    .time-signature {
+      position: absolute;
+      left: 54px;
+      top: 25px;
+      font-weight: 900;
+      font-size: 20px;
+      line-height: 18px;
+    }
+
+    .demo-player {
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(139, 92, 246, 0.26), rgba(236, 72, 153, 0.18)),
+        rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      padding: 20px;
+    }
+
+    .piano-visual {
+      display: flex;
+      align-items: flex-end;
+      height: 112px;
+      gap: 2px;
+      margin: 18px 0;
+      overflow: hidden;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.24);
+      padding: 12px;
+    }
+
+    .key {
+      flex: 1;
+      height: 74px;
+      background: #f8fafc;
+      border-radius: 0 0 5px 5px;
+      position: relative;
+    }
+
+    .key.black::after {
+      content: "";
+      position: absolute;
+      right: -9px;
+      top: 0;
+      width: 16px;
+      height: 46px;
+      border-radius: 0 0 4px 4px;
+      background: #111827;
+      z-index: 2;
+    }
+
+    .play-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .play-button {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 0;
+      background: white;
+      color: #11152c;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .progress {
+      flex: 1;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 38%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--pink));
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .feature-card,
+    .example-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .feature-card h3,
+    .example-card h3 {
+      margin: 0 0 8px;
+      font-size: 19px;
+    }
+
+    .feature-card p,
+    .example-card p {
+      color: var(--muted);
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #dbeafe;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: 34px 6.5%;
+      border-top: 1px solid var(--border);
+      color: var(--muted-2);
+      font-size: 14px;
+    }
+
+    @media (max-width: 1180px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        position: static;
+      }
+
+      .cards,
+      .workflow {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .music-info {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 52px;
+      }
+
+      .hero h1 {
+        font-size: 39px;
+        letter-spacing: -1.2px;
+      }
+
+      .hero p {
+        font-size: 16px;
+      }
+
+      .form-grid,
+      .metrics,
+      .cards,
+      .workflow,
+      .music-info,
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .section h2 {
+        font-size: 29px;
+      }
+
+      .result-top {
+        flex-direction: column;
+      }
+
+      .score {
+        align-self: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <nav class="nav">
+      <a href="#" class="logo">
+        <div class="logo-mark">♪</div>
+        <span>一念成歌</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#lyrics">歌词创作</a>
+        <a href="#compose">作曲生成</a>
+        <a href="#score">乐谱生成</a>
+        <a href="#demo">钢琴 Demo</a>
+      </div>
+
+      <a href="#workspace" class="nav-cta">开始创作</a>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <div class="badge">✨ AI 写词 · AI 作曲 · 生成乐谱 · 钢琴 Demo</div>
+        <h1>
+          输入一句灵感，<br />
+          <span class="gradient-text">生成一首原创歌</span>
+        </h1>
+        <p>
+          一念成歌面向普通用户和短视频创作者，帮助你从一个故事、一段情绪或一句文案出发，
+          自动生成高质量中文歌词、旋律作曲方案、词曲乐谱和钢琴 Demo。
+        </p>
+
+        <div class="hero-actions">
+          <a href="#workspace"><button class="btn btn-primary">立即开始创作</button></a>
+          <a href="#score"><button class="btn btn-secondary">查看乐谱样式</button></a>
+          <a href="#demo"><button class="btn btn-secondary">查看 Demo 区</button></a>
+        </div>
+
+        <div class="notice">
+          当前 MVP 推荐路线：先生成歌词、作曲方案、简谱和钢琴 Demo 提示词；后续升级为站内五线谱渲染、MIDI 下载和 MP3 钢琴 Demo。
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="field">
+          <div class="label">歌曲灵感</div>
+          <textarea placeholder="例如：我想写一首关于分手后释然的古风流行歌，情绪是遗憾、温柔、放下，伴奏想用钢琴。"></textarea>
+          <div class="hint">你可以输入故事、情绪、人物关系、短视频文案或想表达的一句话。</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <div class="label">歌曲风格</div>
+            <select>
+              <option>古风流行</option>
+              <option>华语流行</option>
+              <option>都市民谣</option>
+              <option>R&B 抒情</option>
+              <option>短视频副歌</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">情绪</div>
+            <select>
+              <option>遗憾、温柔、释然</option>
+              <option>甜蜜、明亮、心动</option>
+              <option>孤独、克制、伤感</option>
+              <option>热血、坚定、燃</option>
+              <option>治愈、安静、陪伴</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">生成长度</div>
+            <select>
+              <option>60 秒 Demo</option>
+              <option>30 秒短视频 Hook</option>
+              <option>完整歌曲结构</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">伴奏类型</div>
+            <select>
+              <option>钢琴伴奏</option>
+              <option>钢琴 + 弦乐</option>
+              <option>钢琴 + 轻鼓</option>
+              <option>极简钢琴</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="chips">
+          <span class="chip active">高质量中文歌词</span>
+          <span class="chip active">自动作曲</span>
+          <span class="chip">简谱</span>
+          <span class="chip">五线谱</span>
+          <span class="chip">钢琴 Demo</span>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%; margin-top:16px;">生成歌词与作曲方案</button>
+      </div>
+    </header>
+
+    <div class="metrics">
+      <div class="metric">
+        <strong>12,806</strong>
+        <span>累计访问</span>
+      </div>
+      <div class="metric">
+        <strong>3,421</strong>
+        <span>作品生成</span>
+      </div>
+      <div class="metric">
+        <strong>91%</strong>
+        <span>歌词满意度</span>
+      </div>
+      <div class="metric">
+        <strong>0 元</strong>
+        <span>MVP 启动预算</span>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-kicker">PRODUCT FLOW</div>
+        <h2>从灵感到 Demo 的完整创作流程</h2>
+        <p class="section-desc">
+          网站的核心不是只生成一段歌词，而是把歌曲创作拆成四步：先写好词，再生成曲子，再生成乐谱，最后生成钢琴 Demo。
+        </p>
+      </div>
+
+      <div class="workflow">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>歌词创作</h3>
+          <p>根据主题、故事、情绪和用途，生成可唱、押韵、有画面感的中文歌词。</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>作曲生成</h3>
+          <p>生成 BPM、调式、拍号、和弦走向、旋律简谱和段落结构。</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>词曲乐谱</h3>
+          <p>先输出简谱和歌词对齐，后续升级为五线谱、钢琴谱和 PDF 导出。</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <h3>钢琴 Demo</h3>
+          <p>生成钢琴伴奏 Demo，后续支持 MIDI、MP3 和在线试听。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="workspace">
+      <div class="section-head">
+        <div class="section-kicker">WORKSPACE</div>
+        <h2>创作工作台原型</h2>
+        <p class="section-desc">
+          这是网站最核心的页面。左侧负责输入设置，右侧按“歌词、作曲、乐谱、Demo”分步骤展示结果。
+        </p>
+      </div>
+
+      <div class="workspace">
+        <aside class="side-panel">
+          <div class="panel-title">
+            <h3>创作设置</h3>
+            <span class="status-pill">无需登录</span>
+          </div>
+
+          <div class="field">
+            <div class="label">输入你的歌曲灵感</div>
+            <textarea placeholder="例：一首写给前任的歌，想表达不是不难过，而是终于学会放下。风格偏古风流行，钢琴伴奏。"></textarea>
+          </div>
+
+          <div class="field">
+            <div class="label">用途</div>
+            <select>
+              <option>完整歌曲 Demo</option>
+              <option>30 秒短视频副歌</option>
+              <option>表白歌</option>
+              <option>生日歌</option>
+              <option>毕业歌</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">曲风</div>
+            <select>
+              <option>古风流行</option>
+              <option>华语流行</option>
+              <option>民谣</option>
+              <option>R&B</option>
+              <option>钢琴抒情</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">情绪</div>
+            <select>
+              <option>遗憾但释然</option>
+              <option>温柔治愈</option>
+              <option>孤独伤感</option>
+              <option>甜蜜心动</option>
+              <option>热血坚定</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">Demo 伴奏</div>
+            <select>
+              <option>钢琴伴奏</option>
+              <option>钢琴 + 弦乐 Pad</option>
+              <option>钢琴 + 轻鼓</option>
+              <option>极简钢琴独奏</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">人声 Demo</div>
+            <select>
+              <option>第一版暂不生成人声，只生成钢琴 Demo</option>
+              <option>后续：温柔女声</option>
+              <option>后续：清澈男声</option>
+              <option>后续：男女对唱</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%; margin-bottom:10px;">1. 生成歌词</button>
+          <button class="btn btn-cyan" style="width:100%; margin-bottom:10px;">2. 生成作曲</button>
+          <button class="btn btn-green" style="width:100%; margin-bottom:10px;">3. 生成乐谱</button>
+          <button class="btn btn-secondary" style="width:100%;">4. 生成钢琴 Demo</button>
+
+          <div class="toolbar">
+            <button class="small-btn">复制 Prompt</button>
+            <button class="small-btn">保存本地</button>
+            <button class="small-btn">清空</button>
+          </div>
+        </aside>
+
+        <main class="main-panel">
+          <div class="tabs">
+            <div class="tab active">歌词</div>
+            <div class="tab">作曲</div>
+            <div class="tab">乐谱</div>
+            <div class="tab">Demo</div>
+          </div>
+
+          <div class="result-grid">
+            <div class="result-card" id="lyrics">
+              <div class="result-top">
+                <div>
+                  <h3>《后来风停了》</h3>
+                  <div class="hint">古风流行 · 遗憾但释然 · 60 秒钢琴 Demo</div>
+                </div>
+                <div class="score">歌词质量 91 分</div>
+              </div>
+
+              <div class="lyrics">Verse 1
+入夜的风轻轻绕过旧城墙
+我把你的名字收进月光
+那年桃花落在掌心中央
+像一句没说出口的原谅
+
+Pre-Chorus
+不是不想
+是梦太长
+我终于学会
+不再回望
+
+Chorus
+后来风停了
+我也慢慢放下
+那些等不到的回答
+就留给旧时光吧
+
+后来月亮啊
+照过人海茫茫
+我想起你也不再慌张
+只当春色来过一场</div>
+
+              <div class="toolbar">
+                <button class="small-btn primary">更押韵</button>
+                <button class="small-btn primary">更口语</button>
+                <button class="small-btn primary">更有画面感</button>
+                <button class="small-btn pink">重写副歌</button>
+                <button class="small-btn green">确认歌词，进入作曲</button>
+                <button class="small-btn">复制歌词</button>
+              </div>
+            </div>
+
+            <div class="result-card" id="compose">
+              <div class="result-top">
+                <div>
+                  <h3>作曲方案</h3>
+                  <div class="hint">根据歌词自动生成旋律、和弦、BPM、调式和钢琴伴奏建议。</div>
+                </div>
+                <div class="score">作曲草案</div>
+              </div>
+
+              <div class="music-info">
+                <div class="info-box">
+                  <span>BPM</span>
+                  <strong>76</strong>
+                </div>
+                <div class="info-box">
+                  <span>调式</span>
+                  <strong>C 大调</strong>
+                </div>
+                <div class="info-box">
+                  <span>拍号</span>
+                  <strong>4/4</strong>
+                </div>
+                <div class="info-box">
+                  <span>伴奏</span>
+                  <strong>钢琴</strong>
+                </div>
+              </div>
+
+              <div class="prompt-box">【歌曲结构】
+Intro 2 小节 → Verse 1 → Pre-Chorus → Chorus → Piano Outro
+
+【和弦走向】
+Intro：C - G - Am - F
+Verse：C - G - Am - F
+Pre-Chorus：Dm - Em - F - G
+Chorus：F - G - Em - Am / Dm - G - C
+
+【旋律方向】
+主歌：音区较低，以 3、5、6 级音为主，叙述感强。
+预副歌：旋律逐渐上行，情绪开始打开。
+副歌：第一句上行进入高潮，第二句保持稳定，最后一句下行收束，形成释然感。
+
+【钢琴伴奏型】
+左手使用分解和弦，右手弹主旋律并加入少量经过音。
+前奏保持极简，副歌加入更宽的八度音增强情绪。</div>
+
+              <div class="toolbar">
+                <button class="small-btn cyan">生成旋律简谱</button>
+                <button class="small-btn primary">换一版和弦</button>
+                <button class="small-btn primary">更古风</button>
+                <button class="small-btn primary">更流行</button>
+                <button class="small-btn green">确认作曲，生成乐谱</button>
+              </div>
+            </div>
+
+            <div class="result-card" id="score">
+              <div class="result-top">
+                <div>
+                  <h3>词曲乐谱预览</h3>
+                  <div class="hint">MVP 先输出简谱 + 歌词对齐；后续升级为五线谱、钢琴谱、PDF 和 MusicXML。</div>
+                </div>
+                <div class="score">乐谱预览</div>
+              </div>
+
+              <div class="jianpu">歌名：《后来风停了》
+调式：C 大调　拍号：4/4　速度：76 BPM
+伴奏：钢琴分解和弦
+
+【Verse 1】
+和弦：C        G        Am       F
+简谱：5 5 6 5 | 3 2 1 - | 2 3 5 3 | 2 1 - -
+歌词：入 夜 的 风 | 轻 轻 绕 过 | 旧 城 墙 | 啊 -
+
+和弦：C        G        Am       F
+简谱：3 5 6 5 | 3 2 1 - | 2 3 5 3 | 2 1 - -
+歌词：我 把 你 的 | 名 字 收 进 | 月 光 里 | 啊 -
+
+【Chorus】
+和弦：F        G        Em       Am
+简谱：1 2 3 5 | 6 5 3 - | 5 6 5 3 | 2 1 - -
+歌词：后 来 风 停 | 了 我 也 | 慢 慢 放 | 下 -
+
+和弦：Dm       G        C
+简谱：2 3 5 6 | 5 3 2 - | 1 - - -
+歌词：只 当 春 色 | 来 过 一 | 场 - - -</div>
+
+              <div class="score-sheet" style="margin-top:18px;">
+                <div class="score-sheet-header">
+                  <h2>后来风停了</h2>
+                  <p>AI 作词 · AI 作曲 · 钢琴伴奏谱预览</p>
+                </div>
+
+                <div class="staff-block">
+                  <div class="staff-meta">
+                    <span>C Major · 4/4 · ♩=76</span>
+                    <span>Verse</span>
+                  </div>
+                  <div class="staff">
+                    <div class="clef">𝄞</div>
+                    <div class="time-signature">4<br/>4</div>
+                    <div class="bar" style="left:25%;"></div>
+                    <div class="bar" style="left:50%;"></div>
+                    <div class="bar" style="left:75%;"></div>
+                    <div class="chord-symbol" style="left:12%;">C</div>
+                    <div class="chord-symbol" style="left:34%;">G</div>
+                    <div class="chord-symbol" style="left:57%;">Am</div>
+                    <div class="chord-symbol" style="left:80%;">F</div>
+
+                    <div class="note" style="left:15%; top:49px;"></div>
+                    <div class="note" style="left:20%; top:49px;"></div>
+                    <div class="note" style="left:26%; top:41px;"></div>
+                    <div class="note" style="left:32%; top:49px;"></div>
+                    <div class="note" style="left:43%; top:58px;"></div>
+                    <div class="note" style="left:50%; top:65px;"></div>
+                    <div class="note" style="left:57%; top:72px;"></div>
+                    <div class="note" style="left:69%; top:65px;"></div>
+                    <div class="note" style="left:76%; top:58px;"></div>
+                    <div class="note" style="left:83%; top:49px;"></div>
+
+                    <div class="lyric-syllable" style="left:15%;">入</div>
+                    <div class="lyric-syllable" style="left:20%;">夜</div>
+                    <div class="lyric-syllable" style="left:26%;">的</div>
+                    <div class="lyric-syllable" style="left:32%;">风</div>
+                    <div class="lyric-syllable" style="left:43%;">轻</div>
+                    <div class="lyric-syllable" style="left:50%;">轻</div>
+                    <div class="lyric-syllable" style="left:57%;">绕</div>
+                    <div class="lyric-syllable" style="left:69%;">过</div>
+                    <div class="lyric-syllable" style="left:76%;">旧</div>
+                    <div class="lyric-syllable" style="left:83%;">城</div>
+                  </div>
+                </div>
+
+                <div class="staff-block">
+                  <div class="staff-meta">
+                    <span>Chorus</span>
+                    <span>钢琴右手主旋律 · 左手分解和弦</span>
+                  </div>
+                  <div class="staff">
+                    <div class="clef">𝄞</div>
+                    <div class="time-signature">4<br/>4</div>
+                    <div class="bar" style="left:25%;"></div>
+                    <div class="bar" style="left:50%;"></div>
+                    <div class="bar" style="left:75%;"></div>
+                    <div class="chord-symbol" style="left:12%;">F</div>
+                    <div class="chord-symbol" style="left:34%;">G</div>
+                    <div class="chord-symbol" style="left:57%;">Em</div>
+                    <div class="chord-symbol" style="left:80%;">Am</div>
+
+                    <div class="note" style="left:15%; top:72px;"></div>
+                    <div class="note" style="left:22%; top:65px;"></div>
+                    <div class="note" style="left:29%; top:58px;"></div>
+                    <div class="note" style="left:36%; top:49px;"></div>
+                    <div class="note" style="left:48%; top:41px;"></div>
+                    <div class="note" style="left:57%; top:49px;"></div>
+                    <div class="note" style="left:67%; top:58px;"></div>
+                    <div class="note" style="left:78%; top:49px;"></div>
+                    <div class="note" style="left:86%; top:58px;"></div>
+
+                    <div class="lyric-syllable" style="left:15%;">后</div>
+                    <div class="lyric-syllable" style="left:22%;">来</div>
+                    <div class="lyric-syllable" style="left:29%;">风</div>
+                    <div class="lyric-syllable" style="left:36%;">停</div>
+                    <div class="lyric-syllable" style="left:48%;">了</div>
+                    <div class="lyric-syllable" style="left:57%;">我</div>
+                    <div class="lyric-syllable" style="left:67%;">也</div>
+                    <div class="lyric-syllable" style="left:78%;">放</div>
+                    <div class="lyric-syllable" style="left:86%;">下</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="toolbar">
+                <button class="small-btn green">复制简谱</button>
+                <button class="small-btn cyan">复制 ABC 记谱</button>
+                <button class="small-btn primary">导出 PDF，占位</button>
+                <button class="small-btn primary">导出 MusicXML，占位</button>
+                <button class="small-btn">重新排版</button>
+              </div>
+            </div>
+
+            <div class="result-card" id="demo">
+              <div class="result-top">
+                <div>
+                  <h3>钢琴 Demo</h3>
+                  <div class="hint">第一版先生成钢琴 Demo Prompt；后续升级为 MIDI 播放、MP3 试听和下载。</div>
+                </div>
+                <div class="score">钢琴版</div>
+              </div>
+
+              <div class="demo-player">
+                <div class="hint">钢琴 Demo 播放器占位</div>
+
+                <div class="piano-visual">
+                  <div class="key black"></div>
+                  <div class="key black"></div>
+                  <div class="key"></div>
+                  <div class="key black"></div>
+                  <div class="key black"></div>
+                  <div class="key black"></div>
+                  <div class="key"></div>
+                  <div class="key black"></div>
+                  <div class="key black"></div>
+                  <div class="key"></div>
+                  <div class="key black"></div>
+                  <div class="key black"></div>
+                  <div class="key"></div>
+                  <div class="key black"></div>
+                </div>
+
+                <div class="play-row">
+                  <button class="play-button">▶</button>
+                  <div class="progress">
+                    <div class="progress-fill"></div>
+                  </div>
+                  <span class="hint">00:23 / 01:00</span>
+                </div>
+              </div>
+
+              <div class="prompt-box" style="margin-top:18px;">【钢琴 Demo 生成 Prompt】
+
+请生成一首中文古风流行钢琴 Demo。
+
+歌名：《后来风停了》
+时长：60 秒
+BPM：76
+调式：C 大调
+拍号：4/4
+伴奏：钢琴
+人声：暂不需要，使用钢琴右手演奏主旋律
+情绪：遗憾、温柔、释然
+
+歌曲结构：
+2 小节钢琴前奏 → Verse → Pre-Chorus → Chorus → 2 小节尾奏
+
+和弦：
+Verse：C - G - Am - F
+Pre-Chorus：Dm - Em - F - G
+Chorus：F - G - Em - Am / Dm - G - C
+
+钢琴要求：
+左手使用分解和弦，右手演奏主旋律。
+主歌轻柔克制，副歌旋律上行，最后一句下行收束。
+整体不要模仿任何具体歌曲，只生成原创旋律和钢琴伴奏。
+
+歌词：
+后来风停了
+我也慢慢放下
+那些等不到的回答
+就留给旧时光吧</div>
+
+              <div class="toolbar">
+                <button class="small-btn green">复制 Demo Prompt</button>
+                <button class="small-btn cyan">生成 MIDI，占位</button>
+                <button class="small-btn cyan">生成 MP3，占位</button>
+                <button class="small-btn primary">重新生成钢琴版</button>
+                <button class="small-btn">下载 Demo，占位</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-kicker">CORE FEATURES</div>
+        <h2>网站核心功能</h2>
+        <p class="section-desc">
+          第一版不追求一步到位做成专业音乐平台，而是先把歌曲创作链路跑通，让用户能从灵感得到“词、曲、谱、Demo 方案”。
+        </p>
+      </div>
+
+      <div class="cards">
+        <div class="feature-card">
+          <span class="tag">歌词</span>
+          <h3>高质量中文歌词</h3>
+          <p>重点优化自然度、押韵、可唱性、画面感和副歌记忆点，减少 AI 味。</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="tag">作曲</span>
+          <h3>自动作曲方案</h3>
+          <p>生成 BPM、调式、拍号、和弦、旋律方向、段落结构和钢琴伴奏建议。</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="tag">乐谱</span>
+          <h3>词曲乐谱生成</h3>
+          <p>先输出简谱和歌词对齐，后续升级为五线谱、钢琴谱、PDF 和 MusicXML。</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="tag">Demo</span>
+          <h3>钢琴 Demo</h3>
+          <p>生成钢琴 Demo 提示词，后续接入 MIDI 和音频生成，实现在线试听和下载。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-kicker">EXAMPLES</div>
+        <h2>示例作品场景</h2>
+        <p class="section-desc">
+          首页可以放几个示例，让用户立刻理解网站可以生成什么类型的原创歌曲。
+        </p>
+      </div>
+
+      <div class="cards">
+        <div class="example-card">
+          <span class="tag">古风流行</span>
+          <h3>《后来风停了》</h3>
+          <p>分手后释然主题，钢琴 + 古风流行旋律，适合 60 秒 Demo。</p>
+        </div>
+
+        <div class="example-card">
+          <span class="tag">短视频</span>
+          <h3>《把喜欢藏进晚风》</h3>
+          <p>暗恋主题 30 秒副歌，重点突出 Hook 和传播感。</p>
+        </div>
+
+        <div class="example-card">
+          <span class="tag">生日歌</span>
+          <h3>《今天你要快乐》</h3>
+          <p>普通用户送朋友、恋人、家人的定制祝福歌。</p>
+        </div>
+
+        <div class="example-card">
+          <span class="tag">治愈系</span>
+          <h3>《凌晨三点的灯》</h3>
+          <p>都市孤独与自我和解，适合钢琴抒情 Demo。</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>© 2026 一念成歌 · AI 歌词、作曲、乐谱、钢琴 Demo 生成网站</div>
+      <div>累计访问：12,806 · 今日访问：328 · 作品生成：3,421</div>
+    </footer>
+  </div>
+</body>
+</html>
