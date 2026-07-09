@@ -5367,11 +5367,11 @@ Chorus：F - G - Em - Am / Dm - G - C
 
 
 
-                <button class="small-btn primary">导出 PDF，占位</button>
+                <button class="small-btn primary">导出 PDF</button>
 
 
 
-                <button class="small-btn primary">导出 MusicXML，占位</button>
+                <button class="small-btn primary">导出 MusicXML</button>
 
 
 
@@ -5679,11 +5679,11 @@ Chorus：F - G - Em - Am / Dm - G - C
 
 
 
-                <button class="small-btn cyan">生成 MIDI，占位</button>
+                <button class="small-btn cyan">生成 MIDI</button>
 
 
 
-                <button class="small-btn cyan">生成 MP3，占位</button>
+                <button class="small-btn cyan">生成 MP3</button>
 
 
 
@@ -5691,7 +5691,7 @@ Chorus：F - G - Em - Am / Dm - G - C
 
 
 
-                <button class="small-btn">下载 Demo，占位</button>
+                <button class="small-btn">下载 Demo</button>
 
 
 
@@ -6659,6 +6659,116 @@ function switchTab(index) {
 
 
 
+
+// ===== MIDI 文件生成 =====
+function generateMIDI(data) {
+  // 简化的 MIDI 文件生成
+  var bpm = data.bpm || 80;
+  var ticksPerBeat = 480;
+  
+  function writeVarLen(value) {
+    var result = [];
+    var buffer = value & 0x7F;
+    while ((value >>= 7) > 0) {
+      buffer <<= 8;
+      buffer |= 0x80;
+      buffer += (value & 0x7F);
+    }
+    while (true) {
+      result.push(buffer & 0xFF);
+      if (buffer & 0x80) buffer >>= 8;
+      else break;
+    }
+    return result;
+  }
+  
+  function noteToMidi(noteStr) {
+    var notes = {'C':0,'D':2,'E':4,'F':5,'G':7,'A':9,'B':11};
+    var match = noteStr.match(/([A-G])(#|b)?(\d)/);
+    if (!match) return 60;
+    var base = notes[match[1]];
+    if (match[2] === '#') base++;
+    if (match[2] === 'b') base--;
+    return base + (parseInt(match[3]) + 1) * 12;
+  }
+  
+  function durationToTicks(dur) {
+    var map = {'1n': ticksPerBeat*4, '2n': ticksPerBeat*2, '4n': ticksPerBeat, '8n': ticksPerBeat/2, '16n': ticksPerBeat/4, '4n.': ticksPerBeat*1.5, '2n.': ticksPerBeat*3};
+    return map[dur] || ticksPerBeat;
+  }
+  
+  function timeToTicks(timeStr) {
+    var parts = timeStr.split(':');
+    var bars = parseInt(parts[0]) || 0;
+    var beats = parseInt(parts[1]) || 0;
+    var sixteenths = parseInt(parts[2]) || 0;
+    return (bars * 4 + beats) * ticksPerBeat + sixteenths * (ticksPerBeat / 4);
+  }
+  
+  // Collect all notes and sort by time
+  var events = [];
+  var allNotes = (data.rightHand || []).concat(data.leftHand || []);
+  allNotes.forEach(function(n) {
+    var tick = timeToTicks(n.time);
+    var midi = noteToMidi(n.note);
+    var vel = Math.round((n.velocity || 0.8) * 127);
+    var dur = durationToTicks(n.duration || '4n');
+    events.push({tick: tick, type: 'on', note: midi, vel: vel});
+    events.push({tick: tick + dur, type: 'off', note: midi, vel: 0});
+  });
+  events.sort(function(a, b) { return a.tick - b.tick || (a.type === 'off' ? -1 : 1); });
+  
+  // Build track data
+  var trackData = [];
+  // Tempo event
+  var microsecondsPerBeat = Math.round(60000000 / bpm);
+  trackData.push(0x00, 0xFF, 0x51, 0x03);
+  trackData.push((microsecondsPerBeat >> 16) & 0xFF);
+  trackData.push((microsecondsPerBeat >> 8) & 0xFF);
+  trackData.push(microsecondsPerBeat & 0xFF);
+  
+  // Note events
+  var lastTick = 0;
+  events.forEach(function(evt) {
+    var delta = evt.tick - lastTick;
+    lastTick = evt.tick;
+    var varLen = writeVarLen(delta);
+    varLen.forEach(function(b) { trackData.push(b); });
+    if (evt.type === 'on') {
+      trackData.push(0x90, evt.note, evt.vel);
+    } else {
+      trackData.push(0x80, evt.note, 0);
+    }
+  });
+  
+  // End of track
+  trackData.push(0x00, 0xFF, 0x2F, 0x00);
+  
+  // Build MIDI file
+  var midi = [];
+  // Header: MThd
+  midi.push(0x4D, 0x54, 0x68, 0x64); // MThd
+  midi.push(0x00, 0x00, 0x00, 0x06); // chunk length
+  midi.push(0x00, 0x00); // format 0
+  midi.push(0x00, 0x01); // 1 track
+  midi.push((ticksPerBeat >> 8) & 0xFF, ticksPerBeat & 0xFF); // ticks per beat
+  
+  // Track: MTrk
+  midi.push(0x4D, 0x54, 0x72, 0x6B); // MTrk
+  var len = trackData.length;
+  midi.push((len >> 24) & 0xFF, (len >> 16) & 0xFF, (len >> 8) & 0xFF, len & 0xFF);
+  trackData.forEach(function(b) { midi.push(b); });
+  
+  // Download
+  var arr = new Uint8Array(midi);
+  var blob = new Blob([arr], {type: 'audio/midi'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (data.title || 'piano-demo') + '.mid';
+  a.click();
+  alert('MIDI 文件已下载！可用任何 MIDI 播放器或 DAW 打开');
+}
+
 // ===== Tone.js 钢琴播放器 =====
 
 var pianoSynth = null;
@@ -7146,6 +7256,128 @@ document.addEventListener('DOMContentLoaded', function() {
   // API Key 已内置，无需重置功能
 
 
+
+  
+  // ===== Demo 区按钮绑定 =====
+  var demoCard = document.querySelector('#demo');
+  if (demoCard) {
+    demoCard.querySelectorAll('.small-btn').forEach(function(btn) {
+      var text = btn.textContent.trim();
+      
+      if (text === '复制 Demo Prompt') {
+        btn.addEventListener('click', function() {
+          var box = document.querySelector('#demo .prompt-box');
+          var c = box ? box.textContent : '';
+          if (c) { navigator.clipboard.writeText(c).then(function() { alert('已复制到剪贴板'); }); }
+          else { alert('暂无内容可复制，请先生成 Demo'); }
+        });
+      }
+      
+      if (text.includes('重新生成钢琴版')) {
+        btn.addEventListener('click', function() {
+          if (!generatedLyrics || !generatedCompose) {
+            alert('请先完成歌词和作曲步骤');
+            return;
+          }
+          generateDemo();
+        });
+      }
+      
+      if (text.includes('生成 MIDI')) {
+        btn.addEventListener('click', function() {
+          if (!window.currentPianoData) {
+            alert('请先生成钢琴 Demo，再导出 MIDI');
+            return;
+          }
+          // 生成 MIDI 文件
+          generateMIDI(window.currentPianoData);
+        });
+      }
+      
+      if (text.includes('生成 MP3')) {
+        btn.addEventListener('click', function() {
+          if (!window.currentPianoData) {
+            alert('请先生成钢琴 Demo');
+            return;
+          }
+          alert('MP3 导出功能开发中，请先使用在线播放试听');
+        });
+      }
+      
+      if (text.includes('下载 Demo')) {
+        btn.addEventListener('click', function() {
+          if (!window.currentPianoData) {
+            alert('请先生成钢琴 Demo');
+            return;
+          }
+          // 下载 JSON 数据
+          var blob = new Blob([JSON.stringify(window.currentPianoData, null, 2)], {type: 'application/json'});
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = (window.currentPianoData.title || 'piano-demo') + '.json';
+          a.click();
+        });
+      }
+    });
+  }
+
+  // ===== 乐谱区按钮绑定 =====
+  var scoreCard = document.querySelector('#score');
+  if (scoreCard) {
+    scoreCard.querySelectorAll('.small-btn').forEach(function(btn) {
+      var text = btn.textContent.trim();
+      
+      if (text === '复制简谱') {
+        btn.addEventListener('click', function() {
+          if (generatedScore) {
+            navigator.clipboard.writeText(generatedScore).then(function() { alert('简谱已复制到剪贴板'); });
+          } else { alert('暂无乐谱，请先生成'); }
+        });
+      }
+      
+      if (text.includes('复制 ABC 记谱')) {
+        btn.addEventListener('click', function() {
+          if (!generatedScore) { alert('请先生成乐谱'); return; }
+          // 将简谱信息复制（ABC记谱需要转换，这里先复制原始数据）
+          var abcText = '% ABC Notation\nX:1\nT:' + (generatedLyrics.match(/《(.+?)》/) ? generatedLyrics.match(/《(.+?)》/)[1] : 'Song') + '\nM:4/4\nL:1/4\nK:C\n% 请根据以下简谱手动转换为ABC记谱\n% ' + generatedScore.substring(0, 200).replace(/\n/g, '\n% ');
+          navigator.clipboard.writeText(abcText).then(function() { alert('ABC 记谱框架已复制到剪贴板'); });
+        });
+      }
+      
+      if (text.includes('导出 PDF')) {
+        btn.addEventListener('click', function() {
+          if (!generatedScore) { alert('请先生成乐谱'); return; }
+          // 生成简易 PDF（使用浏览器打印功能）
+          var printWin = window.open('', '_blank');
+          printWin.document.write('<html><head><title>乐谱</title><style>body{font-family:monospace;white-space:pre-wrap;padding:40px;line-height:1.8;}</style></head><body>');
+          printWin.document.write(generatedScore.replace(/</g, '&lt;'));
+          printWin.document.write('</body></html>');
+          printWin.document.close();
+          printWin.print();
+        });
+      }
+      
+      if (text.includes('导出 MusicXML')) {
+        btn.addEventListener('click', function() {
+          if (!generatedScore) { alert('请先生成乐谱'); return; }
+          alert('MusicXML 导出功能开发中');
+        });
+      }
+      
+      if (text === '重新排版') {
+        btn.addEventListener('click', function() {
+          if (!generatedScore) { alert('暂无乐谱内容'); return; }
+          var jianpu = scoreCard.querySelector('.jianpu');
+          if (jianpu) {
+            jianpu.style.fontFamily = 'monospace';
+            jianpu.style.lineHeight = '2';
+            jianpu.style.letterSpacing = '1px';
+            alert('已重新排版');
+          }
+        });
+      }
+    });
+  }
 
   console.log('[一念成歌] 功能脚本加载完成');
 
